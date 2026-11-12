@@ -1,1 +1,37 @@
+"""Q7 - Original program (from Q6): plain recursion. 
 
+Measures calls and time for n = 10, 20, 25, 30 and writes results.csv.
+"""
+
+import csv
+import time
+
+calls = 0
+
+
+def ways_naive(n):
+    """Ways to climb n temple steps taking 1 or 2 steps at a time."""
+    global calls
+    calls += 1
+    if n <= 1:
+        return 1
+    return ways_naive(n - 1) + ways_naive(n - 2)
+
+
+SIZES = (10, 20, 25, 30)
+
+with open("results.csv", "w", newline="") as f:      # "w": start a fresh file
+    writer = csv.writer(f)
+    writer.writerow(["n", "version", "answer", "calls", "time_seconds"])
+
+    print(f"{'n':>3} {'answer':>10} {'calls':>10} {'time (s)':>10}")
+    for n in SIZES:
+        calls = 0
+        start = time.perf_counter()
+        answer = ways_naive(n)
+        elapsed = time.perf_counter() - start
+        print(f"{n:>3} {answer:>10} {calls:>10} {elapsed:>10.6f}")
+        writer.writerow([n, "original", answer, calls, f"{elapsed:.6f}"])
+
+# Diagnosis: calls roughly multiply by 1.6 for every extra step, because
+# ways_naive(n-2), ways_naive(n-3) ... are recomputed again and again.
