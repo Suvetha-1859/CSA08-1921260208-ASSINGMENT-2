@@ -1,1 +1,160 @@
+"""Q5 - Functions, Parameters and Scope (College Canteen Order System)."""
 
+# ---------------------------------------------------------------
+# Complete the Code (given program, TODO 1 replaced)
+# ---------------------------------------------------------------
+def add_item_buggy(item, order=[]):
+    order.append(item)
+    return order
+
+
+def add_item(item, order=None):
+    if order is None:          # TODO 1: new empty list for every call
+        order = []
+    order.append(item)
+    return order
+
+
+print(add_item_buggy("Tea"), add_item_buggy("Vada"))
+print(add_item("Tea"), add_item("Vada"))
+
+# The default list is created once, when the function is defined
+print("add_item_buggy.__defaults__ =", add_item_buggy.__defaults__)
+print("add_item.__defaults__       =", add_item.__defaults__)
+
+
+# ---------------------------------------------------------------
+# Positional, keyword and default parameters
+# ---------------------------------------------------------------
+PRICES = {"Tea": 10, "Vada": 15, "Coffee": 20, "Samosa": 12}
+
+
+def add_item_priced(order, item, qty=1):
+    """order and item are required (positional); qty has a default."""
+    order.append((item, qty))
+    return order
+
+
+order = []
+add_item_priced(order, "Tea")                 # positional, default qty
+add_item_priced(order, "Vada", qty=2)         # keyword argument
+add_item_priced(order, item="Coffee", qty=3)  # all keyword
+print("\nPriced order:", order)
+
+
+# ---------------------------------------------------------------
+# Returning more than one value (total and GST)
+# ---------------------------------------------------------------
+def bill(order, gst_rate=0.05):
+    total = sum(PRICES[item] * qty for item, qty in order)
+    gst = round(total * gst_rate, 2)
+    return total, gst, round(total + gst, 2)   # returns a tuple
+
+
+total, gst, grand = bill(order)
+print(f"Total = Rs{total}, GST = Rs{gst}, Payable = Rs{grand}")
+
+
+# ---------------------------------------------------------------
+# Local, global and nonlocal names
+# ---------------------------------------------------------------
+orders_served = 0            # global
+
+
+def serve_wrong():
+    orders_served = orders_served + 1   # UnboundLocalError: treated as local
+    return orders_served
+
+
+def serve_right():
+    global orders_served                # needed to CHANGE a global name
+    orders_served += 1
+    return orders_served
+
+
+print("\nGlobal without 'global' keyword:")
+try:
+    serve_wrong()
+except UnboundLocalError as e:
+    print("  UnboundLocalError:", e)
+
+serve_right()
+serve_right()
+print("  orders_served after two serve_right() calls =", orders_served)
+
+
+def outer():
+    count = 0                           # local to outer, enclosing for inner
+
+    def inner():
+        nonlocal count                  # changes outer's variable
+        count += 1
+        return count
+
+    inner()
+    inner()
+    return count
+
+
+print("nonlocal example, outer() returns", outer())
+
+
+def local_demo():
+    x = "local"                         # exists only inside this function
+    return x
+
+
+x = "global"
+print("local_demo() =", local_demo(), "| global x still =", x)
+
+# Why globals are usually avoided: any function can change them, so bugs are
+# hard to trace and functions cannot be tested alone. Pass values in as
+# parameters and return results instead.
+
+
+# ---------------------------------------------------------------
+# Test: three customers in sequence, each order independent
+# ---------------------------------------------------------------
+print("\nThree customers:")
+c1 = add_item("Tea")
+c1 = add_item("Vada", c1)
+c2 = add_item("Coffee")
+c3 = add_item("Samosa")
+c3 = add_item("Tea", c3)
+print("Customer 1:", c1)
+print("Customer 2:", c2)
+print("Customer 3:", c3)
+print("Independent objects:", c1 is not c2 and c2 is not c3)
+
+
+# ---------------------------------------------------------------
+# Alternative 1: caller always passes the list explicitly
+# ---------------------------------------------------------------
+def add_item_explicit(item, order):
+    order.append(item)
+    return order
+
+
+print("\nExplicit list:", add_item_explicit("Tea", []), add_item_explicit("Vada", []))
+
+
+# ---------------------------------------------------------------
+# Alternative 2: closure (inner function keeps the order)
+# ---------------------------------------------------------------
+def new_order():
+    order = []
+
+    def add(item):
+        order.append(item)
+        return order
+
+    return add
+
+
+add_a = new_order()
+add_b = new_order()
+add_a("Tea")
+add_a("Vada")
+add_b("Coffee")
+print("Closure customer A:", add_a("Samosa"))
+print("Closure customer B:", add_b("Tea"))
